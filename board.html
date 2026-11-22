@@ -1,0 +1,582 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; font-src data:">
+<style>
+/* Themes from the user's palettes:
+   Spring: Canyon #DF6D41, Buttercream #F7D89A, Morning Sky #8DA6CC, Olive Grove #AAA648
+   Riviera: Riviera Blue #183451, Terracotta #A9501C, Soft Ivory #F3ECDE, Sand Linen #D4AF83 */
+:root, body[data-theme="spring"]{
+  --bg:#FBF6EC; --panel:#F4EBD9; --panel2:#FFFDF8; --line:#E5D9C1; --text:#2D2A24; --soft:#4B463D; --muted:#8C8471;
+  --me:#8DA6CC; --meText:#FFFFFF; --brand1:#DF6D41; --brand2:#F7D89A; --now:#DF6D41; --nowGlow:rgba(223,109,65,.16);
+  --main:#5F7DAE; --mainF:#E7EDF6; --acc:#DF6D41; --accF:#FCE5DA; --good:#8E8A32; --goodF:#F0EFD6;
+  --bad:#C0442B; --badF:#F8DDD6; --alt:#D3A447; --altF:#FCF1D9; --softF:#FFFFFF; --softS:#D9CCB2;
+  --edge:#6B6658; --pen:#DF6D41; --ty:#C9572E; --tg:#7E7A26; --tb:#4F6E9F; --tp:#B98A2E; --tr:#B83D26;
+}
+body[data-theme="ivory"]{
+  --bg:#F3ECDE; --panel:#EAE0CC; --panel2:#FAF6EE; --line:#D8CAAF; --text:#183451; --soft:#2F4766; --muted:#7E7563;
+  --me:#183451; --meText:#F3ECDE; --brand1:#183451; --brand2:#A9501C; --now:#A9501C; --nowGlow:rgba(169,80,28,.15);
+  --main:#183451; --mainF:#E2E7EE; --acc:#A9501C; --accF:#F3E1D4; --good:#6F7A2E; --goodF:#E9EBD5;
+  --bad:#B2382A; --badF:#F5DCD6; --alt:#B88A52; --altF:#F2E5D3; --softF:#FBF8F2; --softS:#D4C4A6;
+  --edge:#3C4B60; --pen:#A9501C; --ty:#A9501C; --tg:#66712A; --tb:#183451; --tp:#9C7240; --tr:#A8352A;
+}
+body[data-theme="riviera"]{
+  --bg:#122A43; --panel:#183451; --panel2:#1E3D5E; --line:#2D4D71; --text:#F3ECDE; --soft:#DCD3C2; --muted:#9FB0C4;
+  --me:#D4AF83; --meText:#183451; --brand1:#D4AF83; --brand2:#A9501C; --now:#D4AF83; --nowGlow:rgba(212,175,131,.2);
+  --main:#8DA6CC; --mainF:#1F3B5C; --acc:#E0874E; --accF:#3B2B26; --good:#B9B55A; --goodF:#2C3828;
+  --bad:#E56B57; --badF:#3E2427; --alt:#D4AF83; --altF:#3A3426; --softF:#1B3756; --softS:#35587E;
+  --edge:#CFC6B4; --pen:#F7D89A; --ty:#F7D89A; --tg:#C7C36A; --tb:#A9BDDC; --tp:#D4AF83; --tr:#F08A78;
+}
+body[data-theme="night"]{
+  --bg:#1C1E22; --panel:#222529; --panel2:#2A2E34; --line:#3A3F47; --text:#F3ECDE; --soft:#D7D0C2; --muted:#9C978B;
+  --me:#8DA6CC; --meText:#1C1E22; --brand1:#DF6D41; --brand2:#F7D89A; --now:#F7D89A; --nowGlow:rgba(247,216,154,.15);
+  --main:#8DA6CC; --mainF:#262F3B; --acc:#DF6D41; --accF:#3A2820; --good:#AAA648; --goodF:#2E3020;
+  --bad:#E5604A; --badF:#3C2422; --alt:#F7D89A; --altF:#3A3426; --softF:#2A2E34; --softS:#464C56;
+  --edge:#BDB6A6; --pen:#F7D89A; --ty:#F7D89A; --tg:#C2BE5E; --tb:#A9BDDC; --tp:#E9C98A; --tr:#F08070;
+}
+body{transition:background-color .5s,color .5s}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font:15px/1.55 -apple-system,"SF Pro Text",system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+.app{display:grid;grid-template-columns:310px 1fr;height:100%;transition:grid-template-columns .28s ease}
+/* Collapsible chat sidebar: hidden by default, the arrow button in the top bar opens it. */
+.app.nochat{grid-template-columns:0px 1fr}
+.app.nochat .chat{border-right-color:transparent}
+.chat{overflow:hidden;min-width:0}
+.chat > *{width:310px;flex-shrink:0}
+.chat > #msgs{flex-shrink:1}
+.app.nochat .msg{animation:none}
+#chatToggle{display:flex;align-items:center;gap:6px;white-space:nowrap}
+#chatToggle svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- wallpaper theme: colors are read from the desktop wallpaper by the app ---------- */
+body[data-theme="wallpaper"]{background-color:var(--bg);
+  background-image:linear-gradient(180deg,var(--veil1),var(--veil2)),var(--backdrop);background-size:cover;background-position:center}
+body[data-theme="wallpaper"] .chat{background:var(--glass)}
+body[data-theme="wallpaper"] .top{background:var(--glass);border-bottom:1px solid transparent;
+  border-image:linear-gradient(90deg,var(--acc),var(--alt) 45%,var(--main)) 1}
+body[data-theme="wallpaper"] .ai{background:var(--glass2)}
+body[data-theme="wallpaper"] .btn{background:var(--glass2)}
+body[data-theme="wallpaper"] #title{letter-spacing:.2px}
+body[data-theme="wallpaper"] #visual .node.accent{filter:drop-shadow(0 0 7px var(--glow))}
+body[data-theme="wallpaper"] #visual .edge.accent{filter:drop-shadow(0 0 4px var(--glow))}
+body[data-theme="wallpaper"] #visual .node{stroke-width:2.6}
+body[data-theme="wallpaper"] .dot.on{box-shadow:0 0 8px var(--glow)}
+
+/* ---------- chat ---------- */
+.chat{display:flex;flex-direction:column;background:var(--panel);border-right:1px solid var(--line);min-height:0}
+.brand{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.logo{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--brand1),var(--brand2));
+  display:grid;place-items:center;font-weight:800;color:#fff;font-size:14px}
+.brand b{font-size:15px;letter-spacing:.2px}
+.brand small{display:block;color:var(--muted);font-size:12px;font-weight:400;margin-top:-2px}
+#msgs{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+#msgs::-webkit-scrollbar{width:6px} #msgs::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.msg{padding:10px 12px;border-radius:14px;font-size:14.5px;line-height:1.55;animation:pop .35s ease-out both}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.me{align-self:flex-end;max-width:88%;background:var(--me);color:var(--meText);border-bottom-right-radius:5px}
+.ai{background:var(--panel2);border:1px solid var(--line);border-bottom-left-radius:5px;color:var(--soft);cursor:pointer;transition:border-color .3s,box-shadow .3s,color .3s}
+.ai:hover{border-color:var(--softS)}
+.ai.now{border-color:var(--now);color:var(--text);box-shadow:0 0 0 3px var(--nowGlow)}
+.ai .n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:var(--line);color:var(--now);
+  font-size:11px;font-weight:700;margin-right:7px;vertical-align:1px}
+.ai.now .n{background:var(--now);color:var(--panel2)}
+.ai{position:relative}
+.ai .replay{position:absolute;right:8px;top:-10px;opacity:0;color:var(--soft);font-size:11px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:1px 8px;transition:opacity .2s}
+.ai:hover .replay{opacity:1}
+.sep{color:var(--muted);font-size:12px;text-align:center;margin:6px 0 2px}
+.sys{color:var(--tr);font-size:13px;text-align:center}
+.typing{display:flex;gap:5px;padding:12px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--now);animation:b 1.2s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-4px)}}
+form{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);color:var(--text);border-radius:11px;padding:10px 12px;font:inherit;font-size:14px;outline:none}
+input:focus{border-color:var(--now)}
+.hint{color:var(--muted);font-size:12px;padding:0 14px 12px;margin-top:-4px}
+
+/* ---------- stage ---------- */
+.stage{display:flex;flex-direction:column;min-width:0;min-height:0}
+.top{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line)}
+#title{flex:1;font-size:18px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dots{display:flex;gap:6px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--line);cursor:pointer;transition:background .3s,transform .3s}
+.dot.seen{background:var(--softS)}.dot.on{background:var(--now);transform:scale(1.25)}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--soft);border-radius:9px;padding:6px 11px;cursor:pointer;font:inherit;font-size:13px}
+.btn:hover{border-color:var(--softS);color:var(--text)}
+#canvasWrap{flex:1;position:relative;overflow:auto;min-height:0}
+#canvas{min-height:100%;padding:22px;display:flex;align-items:center;justify-content:center}
+#visual{width:100%;max-width:980px}
+#visual svg{width:100%;height:auto;display:block;overflow:visible}
+#empty{color:var(--muted);text-align:center;max-width:380px;line-height:1.7}
+#empty .big{font-size:44px;margin-bottom:6px}
+#pen{position:absolute;left:0;top:0;width:14px;height:14px;border-radius:50%;background:var(--pen);
+  box-shadow:0 0 14px 3px var(--pen);pointer-events:none;opacity:0;transform:translate(-50%,-50%);transition:opacity .25s;z-index:5}
+.thinking{display:flex;flex-direction:column;align-items:center;gap:14px;color:var(--muted)}
+.shimmer{width:300px;height:12px;border-radius:6px;background:linear-gradient(90deg,var(--panel),var(--line),var(--panel));background-size:200% 100%;animation:sh 1.3s infinite}
+@keyframes sh{to{background-position:-200% 0}}
+
+/* ---------- on-screen sketch layer (the same drawing, shown right over the screen with no window) ---------- */
+html.overlay, html.overlay body{background:transparent!important;background-image:none!important}
+html.overlay .chat, html.overlay .top, html.overlay #history, html.overlay #empty, html.overlay .thinking{display:none!important}
+html.overlay .app{display:block}
+html.overlay .stage{height:100%}
+html.overlay #canvasWrap{overflow:hidden}
+html.overlay #canvas{padding:12px}
+html.overlay #visual{max-width:none}
+/* No panel behind the sketch: only the strokes, shapes and words, drawn straight onto the screen.
+   A thin outline in the background color keeps them readable over anything (code, video, white pages). */
+html.overlay #visual svg{filter:drop-shadow(0 0 1px var(--bg)) drop-shadow(0 0 3px var(--bg)) drop-shadow(0 0 6px var(--bg))}
+html.overlay #visual text{font-size:20px;font-weight:600;paint-order:stroke;stroke:var(--bg);stroke-width:6px;stroke-linejoin:round}
+html.overlay #visual .small{font-size:16px}
+html.overlay #visual .title{font-size:24px}
+html.overlay #visual .node{stroke-width:3.2;fill-opacity:.9}
+html.overlay #visual .node.accent,html.overlay #visual .edge.accent{filter:none}
+html.overlay #visual .edge{stroke-width:3.2}
+html.overlay #visual .ring{stroke-width:2.6}
+html.overlay #visual .line{stroke:var(--edge);stroke-width:2.4}
+html.overlay #visual .hl{fill-opacity:.3;stroke-width:2.6}
+
+/* ---------- history ---------- */
+#history{position:absolute;inset:0;background:var(--bg);z-index:10;display:flex;flex-direction:column;animation:pop .25s ease-out}
+#history[hidden]{display:none}
+.hhead{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.hhead b{font-size:16px;flex:1}
+.hhead input{flex:0 1 220px}
+#hlist{flex:1;overflow-y:auto;padding:14px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;align-content:start}
+.hcard{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;position:relative;transition:border-color .2s,transform .2s}
+.hcard:hover{border-color:var(--now);transform:translateY(-2px)}
+.hcard .sw{display:flex;gap:4px;margin-bottom:8px}.hcard .sw i{width:14px;height:14px;border-radius:4px}
+.hcard b{display:block;font-size:15px;margin-bottom:4px}
+.hcard .q{color:var(--muted);font-size:12.5px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hcard .d{color:var(--muted);font-size:12px;margin-top:8px}
+.hcard .x{position:absolute;top:8px;right:10px;opacity:0;color:var(--muted);font-size:13px}
+.hcard:hover .x{opacity:1}.hcard .x:hover{color:var(--tr)}
+.hempty{color:var(--muted);grid-column:1/-1;text-align:center;padding:40px}
+
+/* ---------- diagram kit (classes Claude uses) ---------- */
+#visual text{fill:var(--text);font-family:-apple-system,"SF Pro Text",system-ui,sans-serif;font-size:18px}
+#visual .node{fill:var(--mainF);stroke:var(--main);stroke-width:2.5}
+#visual .node.accent{fill:var(--accF);stroke:var(--acc)}
+#visual .node.good{fill:var(--goodF);stroke:var(--good)}
+#visual .node.bad{fill:var(--badF);stroke:var(--bad)}
+#visual .node.alt,#visual .node.purple{fill:var(--altF);stroke:var(--alt)}
+#visual .node.soft{fill:var(--softF);stroke:var(--softS)}
+#visual .ring{fill:none;stroke:var(--good);stroke-width:2}
+#visual .edge{fill:none;stroke:var(--edge);stroke-width:2.4;marker-end:url(#arrow)}
+#visual .edge.accent{stroke:var(--acc);marker-end:url(#arrow-y)}
+#visual .edge.good{stroke:var(--good);marker-end:url(#arrow-g)}
+#visual .edge.alt,#visual .edge.purple{stroke:var(--alt);marker-end:url(#arrow-p)}
+#visual .line{fill:none;stroke:var(--line);stroke-width:2}
+#visual .hl{fill:var(--accF);fill-opacity:.55;stroke:var(--acc);stroke-width:2;stroke-dasharray:6 5}
+#visual .label{font-weight:650}
+#visual .title{font-size:22px;font-weight:700}
+#visual .small{font-size:14px;fill:var(--muted)}
+#visual .mono{font-family:"SF Mono",Menlo,monospace}
+#visual .y{fill:var(--ty)} #visual .g{fill:var(--tg)} #visual .b{fill:var(--tb)}
+#visual .p{fill:var(--tp)} #visual .r{fill:var(--tr)} #visual .c{fill:var(--tb)} #visual .m{fill:var(--muted)}
+#visual .card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:10px 0}
+#visual h2{font-size:20px;margin:0 0 10px}
+#visual table{border-collapse:collapse;width:100%;font-size:15px}
+#visual th,#visual td{border:1px solid var(--line);padding:8px 12px;text-align:center}
+#visual th{background:var(--panel);color:var(--now)}
+#visual .chip{display:inline-block;padding:2px 9px;border-radius:999px;background:var(--line);color:var(--now);font-size:13px}
+.mk{fill:var(--edge)} .mk-y{fill:var(--acc)} .mk-g{fill:var(--good)} .mk-p{fill:var(--alt)}
+#visual code,.mono{font-family:"SF Mono",Menlo,monospace}
+</style>
+</head>
+<body data-theme="spring">
+<svg width="0" height="0" style="position:absolute">
+  <defs id="kitdefs">
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="arrow-y" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-y" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="arrow-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-g" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="arrow-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-p" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+</svg>
+
+<div class="app nochat">
+  <aside class="chat">
+    <div class="brand"><div class="logo">S</div><div><b>Sulehri</b><small>your screen tutor</small></div></div>
+    <div id="msgs"></div>
+    <form id="ask"><input id="q" placeholder="Type a question…" autocomplete="off"><button class="btn">Ask</button></form>
+    <div class="hint">Or hold <b>⌃ Control + ⌥ Option</b> and talk.</div>
+  </aside>
+  <main class="stage">
+    <div class="top">
+      <button class="btn" id="chatToggle" title="Show or hide the chat"></button>
+      <div id="title">Sulehri</div>
+      <div id="dots"></div>
+      <button class="btn" id="prev">◀</button>
+      <button class="btn" id="next">▶</button>
+      <button class="btn" id="redraw">↻ Redraw</button>
+      <button class="btn" id="hist">🕘 History</button>
+      <button class="btn" id="newl">New lesson</button>
+    </div>
+    <div id="canvasWrap">
+      <div id="canvas"><div id="empty"><div class="big">✏️</div>Ask me about anything on your screen.<br>I will explain it slowly, step by step, and draw it here.</div><div id="visual"></div></div>
+      <div id="pen"></div>
+      <div id="history" hidden>
+        <div class="hhead"><b>Your lessons</b><input id="hsearch" placeholder="Search…" autocomplete="off"><button class="btn" id="hclose">Close</button></div>
+        <div id="hlist"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+if(location.hash==='#overlay') document.documentElement.classList.add('overlay');
+const $ = s => document.querySelector(s);
+const post = m => { try { webkit.messageHandlers.sulehri.postMessage(m) } catch(e) {} };
+const answers = [];   // {title, steps:[{text, el}], visual, dotsSeen}
+let showing = -1, step = 0, drawToken = 0;
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML }
+function scrollChat(){ const m=$('#msgs'); m.scrollTop=m.scrollHeight }
+
+// ----- chat -----
+function addUser(text){
+  const d=document.createElement('div'); d.className='msg me'; d.textContent=text; $('#msgs').appendChild(d); scrollChat();
+}
+function sysMsg(text){
+  removeTyping();
+  const d=document.createElement('div'); d.className='sys'; d.textContent=text; $('#msgs').appendChild(d); scrollChat();
+}
+function typing(){ removeTyping(); const t=document.createElement('div'); t.className='typing'; t.id='typing'; t.innerHTML='<i></i><i></i><i></i>'; $('#msgs').appendChild(t); scrollChat() }
+function removeTyping(){ const t=$('#typing'); if(t) t.remove() }
+
+function newAnswer(){
+  $('#history').hidden=true;
+  answers.push({title:'', steps:[], visual:'', theme:document.body.dataset.theme||'spring'});
+  showing = answers.length-1; step = 0;
+  $('#title').textContent='Thinking…';
+  $('#empty').style.display='none';
+  $('#visual').innerHTML='<div class="thinking"><div class="shimmer"></div><div>Looking at your screen and preparing a drawing…</div></div>';
+  renderDots(); typing();
+}
+const THEMES=['spring','ivory','riviera','night'];
+let themeMode='topic', wallReady=false;
+// "wallpaper" mode: every lesson uses the colors read from the desktop wallpaper.
+function resolveTheme(t){ return (themeMode==='wallpaper'&&wallReady)?'wallpaper':(THEMES.includes(t)?t:'spring') }
+function useTheme(t){ const r=resolveTheme(t); document.body.dataset.theme=r; post({type:'theme', theme:r}) }
+function refreshTheme(){ const a=answers[showing]; useTheme(a?a.theme:document.body.dataset.theme) }
+function applyWallTheme(t){
+  let st=document.getElementById('wallstyle');
+  if(!st){ st=document.createElement('style'); st.id='wallstyle'; document.head.appendChild(st) }
+  st.textContent='body[data-theme="wallpaper"]{'+Object.entries(t.vars).map(([k,v])=>k+':'+v).join(';')
+    +';--backdrop:'+(t.backdrop?'url("'+t.backdrop+'")':'none')+'}';
+  SW.wallpaper=t.swatches; wallReady=true; refreshTheme();
+}
+function setThemeMode(m){ themeMode=m; refreshTheme() }
+function setTheme(t){ if(!THEMES.includes(t)) return; const ai=answers.length-1; if(ai>=0) answers[ai].theme=t; if(showing===ai) useTheme(t) }
+
+// ----- collapsible chat sidebar -----
+const ICON_SIDEBAR='<svg viewBox="0 0 16 16"><rect x="1.5" y="2.5" width="13" height="11" rx="2.5"/><path d="M6 2.5v11"/></svg>';
+function setChat(open){
+  $('.app').classList.toggle('nochat', !open);
+  $('#chatToggle').innerHTML=ICON_SIDEBAR+(open?'❮':'Chat ❯');
+  if(open) setTimeout(scrollChat, 300);
+}
+function status(t){ const el=document.querySelector('.thinking div:last-child'); if(el) el.textContent=t }
+function setTitle(t){ const a=answers[answers.length-1]; a.title=t; if(showing===answers.length-1) $('#title').textContent=t }
+function addStep(i, text){
+  const ai=answers.length-1, a=answers[ai];
+  const d=document.createElement('div'); d.className='msg ai';
+  d.innerHTML='<span class="replay">🔊 replay</span><span class="n">'+i+'</span>'+esc(text);
+  d.onclick=()=>{ showAnswer(ai); go(i,true); post({type:'replay', text}) };
+  removeTyping(); $('#msgs').appendChild(d); typing();
+  a.steps[i-1]={text, el:d};
+  if(showing===ai) renderDots();
+  scrollChat();
+}
+function setVisual(html){
+  const ai=answers.length-1; answers[ai].visual=html;
+  if(showing===ai){ mount(html); go(step,true,true) }
+}
+function speakStep(i){
+  const ai=answers.length-1;
+  if(showing!==ai) showAnswer(ai);
+  document.querySelectorAll('.ai.now').forEach(e=>e.classList.remove('now'));
+  const s=answers[ai].steps[i-1]; if(s){ s.el.classList.add('now'); s.el.scrollIntoView({block:'nearest',behavior:'smooth'}) }
+  if(answers[ai].live){
+    // Live drawing: earlier steps are complete; this step is drawn sentence by sentence by cue().
+    step=i; renderDots();
+    for(const g of stepEls()){ const n=stepOf(g); if(n<i && !g.dataset.drawn) showNow(g) }
+    return;
+  }
+  go(i,true);
+}
+
+// ----- live drawing: each step brings its own drawing, drawn while its sentences are spoken -----
+function addDraw(n, html){
+  const ai=answers.length-1, a=answers[ai];
+  if(!a.live){ a.live=true; a.parts=[]; }
+  a.parts.push([n,html]);
+  a.visual='<svg viewBox="0 0 960 560">'+a.parts.map(p=>'<g data-step="'+p[0]+'">'+p[1]+'</g>').join('')+'</svg>';
+  if(showing!==ai) return;
+  let svg=document.querySelector('#visual svg.live');
+  if(!svg){
+    $('#empty').style.display='none';
+    $('#visual').innerHTML='<svg class="live" viewBox="0 0 960 560"></svg>';
+    svg=document.querySelector('#visual svg.live');
+    const d=$('#kitdefs').cloneNode(true); d.removeAttribute('id'); svg.appendChild(d);
+  }
+  svg.insertAdjacentHTML('beforeend','<g data-step="'+n+'">'+html+'</g>');
+  const g=svg.lastElementChild;
+  keepLabelsVisible(svg, g);
+  if(n<step) showNow(g); else hide(g);
+}
+// A later step often "re-colors" a shape that is already drawn by drawing a new one on top.
+// Turn such shapes into outlines, so the label underneath stays readable.
+function keyOf(e){
+  const a=n=>Math.round(parseFloat(e.getAttribute(n)||0)/4);
+  if(e.tagName==='circle'||e.tagName==='ellipse') return 'c'+a('cx')+','+a('cy');
+  if(e.tagName==='rect') return 'r'+a('x')+','+a('y')+','+a('width')+','+a('height');
+  return null;
+}
+function keepLabelsVisible(svg, g){
+  const before=new Set();
+  for(const e of svg.querySelectorAll('circle,ellipse,rect')){ if(!g.contains(e)){ const k=keyOf(e); if(k) before.add(k) } }
+  for(const e of g.querySelectorAll('circle,ellipse,rect')){
+    const k=keyOf(e);
+    if(k && before.has(k)){ e.style.fill='none'; e.style.strokeWidth='4'; e.classList.add('restyle') }
+  }
+}
+// Eraser (hold Control): remove the drawn pieces within r pixels of the point (x, y).
+function eraseAt(x, y, r){
+  const svg=document.querySelector('#visual svg'); if(!svg) return 0;
+  let n=0;
+  const shown=el=>{ for(let e=el; e && e!==svg; e=e.parentElement){ if(e.style && e.style.opacity==='0') return false } return true };
+  for(const el of svg.querySelectorAll('path,line,polyline,polygon,circle,ellipse,rect,text')){
+    if(el.closest('defs,marker') || el.dataset.erased || !shown(el)) continue;
+    const b=el.getBoundingClientRect();
+    if(x<b.left-r || x>b.right+r || y<b.top-r || y>b.bottom+r) continue;        // nowhere near
+    let hit=false;
+    const filled = el.tagName==='text' || getComputedStyle(el).fill!=='none';
+    if(filled && x>=b.left && x<=b.right && y>=b.top && y<=b.bottom) hit=true;   // inside a filled shape or a word
+    if(!hit && el.getTotalLength){                                               // close to its outline
+      let L=0; try{ L=el.getTotalLength() }catch(e){}
+      const m=el.getScreenCTM(), steps=Math.max(8, Math.ceil(L/5));
+      for(let i=0;i<=steps && !hit && m;i++){
+        const p=el.getPointAtLength(L*i/steps);
+        const px=p.x*m.a+p.y*m.c+m.e, py=p.x*m.b+p.y*m.d+m.f;
+        if((px-x)*(px-x)+(py-y)*(py-y) <= r*r) hit=true;
+      }
+    }
+    if(hit){ n++; el.dataset.erased='1'; el.style.transition='opacity .18s'; el.style.opacity='0'; setTimeout(()=>el.remove(), 220) }
+  }
+  return n;
+}
+function atOf(e){ return parseInt(e.getAttribute('at'))||1 }
+// Draw the parts of step n that sentence k talks about, spread over about ms milliseconds.
+function cue(n, k, ms){
+  const ai=answers.length-1, a=answers[ai];
+  if(!a||!a.live||showing!==ai) return;
+  const g=document.querySelector('#visual svg.live > g[data-step="'+n+'"]'); if(!g) return;
+  const kids=[...g.children];
+  if(!g.dataset.cued){ g.dataset.cued='1'; g.style.transition='none'; g.style.opacity='1'; kids.forEach(c=>{ c.style.opacity='0' }) }
+  const els=kids.filter(c=>atOf(c)===k);
+  if(!els.length) return;
+  els.forEach(c=>{ c.style.opacity='1' });
+  drawTimed(els, Math.max(400, ms*0.85), drawToken);
+  if(kids.every(c=>c.style.opacity==='1')) g.dataset.drawn='1';
+}
+async function drawTimed(els, budget, token){
+  // Estimate how long each stroke takes at normal speed, then stretch or squeeze to fit the sentence.
+  let base=0;
+  for(const el of els) for(const p of parts(el)){
+    if(p.tagName==='text') { base+=110; continue }
+    let L=0; try{ L=p.getTotalLength() }catch(e){}
+    base+= L? Math.max(140, Math.min(650, L*1.2)) : 0;
+  }
+  const speed=Math.max(0.4, Math.min(2.5, budget/Math.max(base,1)));
+  for(const el of els){ if(token!==drawToken) return; await drawOne(el, token, speed) }
+  $('#pen').style.opacity='0';
+}
+function finish(){
+  removeTyping();
+  document.querySelectorAll('.ai.now').forEach(e=>e.classList.remove('now'));
+  const a=answers[answers.length-1];
+  if(a && !a.visual && showing===answers.length-1){ $('#visual').innerHTML=''; $('#empty').style.display='block'; $('#empty').innerHTML='<div class="big">💬</div>No drawing needed for this one.' }
+  if(a && !a.title) $('#title').textContent='Sulehri';
+}
+function clearAll(){
+  answers.length=0; showing=-1; step=0; drawToken++;
+  $('#msgs').innerHTML=''; $('#visual').innerHTML=''; $('#dots').innerHTML=''; $('#title').textContent='Sulehri';
+  $('#empty').style.display='block';
+  $('#empty').innerHTML='<div class="big">✏️</div>Ask me about anything on your screen.<br>I will explain it slowly, step by step, and draw it here.';
+  $('#history').hidden=true;
+}
+function newLesson(){
+  clearAll();
+  const d=document.createElement('div'); d.className='sep'; d.textContent='New lesson — your old ones are in History'; $('#msgs').appendChild(d);
+}
+
+// ----- history -----
+const SW={spring:['#DF6D41','#F7D89A','#8DA6CC','#AAA648'],ivory:['#F3ECDE','#183451','#A9501C','#D4AF83'],
+          riviera:['#183451','#D4AF83','#A9501C','#F3ECDE'],night:['#1C1E22','#DF6D41','#F7D89A','#8DA6CC']};
+let historyItems=[];
+function when(t){ const d=new Date(t*1000), now=new Date();
+  const day=d.toDateString()===now.toDateString()?'Today':(new Date(now-864e5).toDateString()===d.toDateString()?'Yesterday':d.toLocaleDateString(undefined,{month:'short',day:'numeric'}));
+  return day+', '+d.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}) }
+function showHistory(list){ historyItems=list; $('#history').hidden=false; renderHistory() }
+function renderHistory(){
+  const q=$('#hsearch').value.toLowerCase(); const h=$('#hlist'); h.innerHTML='';
+  const items=historyItems.filter(l=>(l.title+' '+l.questions).toLowerCase().includes(q));
+  if(!items.length){ h.innerHTML='<div class="hempty">'+(historyItems.length?'No lessons match.':'No saved lessons yet. Ask me something!')+'</div>'; return }
+  for(const l of items){
+    const c=document.createElement('div'); c.className='hcard';
+    c.innerHTML='<span class="x" title="Delete">✕</span><div class="sw">'+((themeMode==='wallpaper'&&SW.wallpaper)||SW[l.theme]||SW.spring).map(x=>'<i style="background:'+x+'"></i>').join('')+'</div><b>'+esc(l.title)+'</b><div class="q">'+esc(l.questions)+'</div><div class="d">'+when(l.updated)+' · '+l.count+' question'+(l.count==1?'':'s')+'</div>';
+    c.onclick=()=>post({type:'openLesson', id:l.id});
+    c.querySelector('.x').onclick=e=>{ e.stopPropagation(); post({type:'deleteLesson', id:l.id}) };
+    h.appendChild(c);
+  }
+}
+function loadLesson(l){
+  clearAll();
+  $('#empty').style.display='none';
+  for(const a of (l.answers||[])){
+    addUser(a.question);
+    const ai=answers.length;
+    answers.push({title:a.title||'', steps:[], visual:a.visual||'', theme:a.theme||'spring'});
+    (a.steps||[]).forEach((text,i)=>{
+      const d=document.createElement('div'); d.className='msg ai';
+      d.innerHTML='<span class="replay">🔊 replay</span><span class="n">'+(i+1)+'</span>'+esc(text);
+      d.onclick=()=>{ showAnswer(ai); go(i+1,true); post({type:'replay', text}) };
+      $('#msgs').appendChild(d); answers[ai].steps[i]={text, el:d};
+    });
+  }
+  const d=document.createElement('div'); d.className='sep'; d.textContent='Lesson restored — ask more to continue'; $('#msgs').appendChild(d);
+  if(answers.length){ showing=-1; showAnswer(answers.length-1); go(answers[answers.length-1].steps.length||1,false); if(!answers[answers.length-1].visual){ $('#empty').style.display='block'; $('#empty').innerHTML='<div class="big">💬</div>No drawing for this one.' } }
+  scrollChat();
+}
+
+// ----- stage -----
+function showAnswer(ai){
+  if(showing===ai) return;
+  showing=ai; const a=answers[ai]; useTheme(a.theme);
+  $('#title').textContent=a.title||'Sulehri';
+  if(a.visual){ $('#empty').style.display='none'; mount(a.visual) } else { $('#visual').innerHTML='' }
+  renderDots();
+}
+function renderDots(){
+  const a=answers[showing]; const n=a?a.steps.length:0; const d=$('#dots'); d.innerHTML='';
+  for(let i=1;i<=n;i++){ const e=document.createElement('div'); e.className='dot'+(i===step?' on':i<step?' seen':''); e.onclick=()=>go(i,true); d.appendChild(e) }
+}
+
+function mount(html){
+  const v=$('#visual'); v.innerHTML=html;
+  // Give every diagram the shared arrow heads.
+  v.querySelectorAll('svg').forEach(svg=>{ if(!svg.closest('svg svg')) svg.insertBefore($('#kitdefs').cloneNode(true), svg.firstChild) });
+  v.querySelector('#kitdefs') && v.querySelectorAll('#kitdefs').forEach(d=>d.removeAttribute('id'));
+  // Run scripts the visual brought with it.
+  v.querySelectorAll('svg').forEach(svg=>{ for(const g of svg.querySelectorAll(':scope > g[data-step]')) keepLabelsVisible(svg, g) });
+  v.querySelectorAll('script').forEach(old=>{ const s=document.createElement('script'); s.textContent=old.textContent; old.replaceWith(s) });
+}
+
+function stepOf(el){ return parseInt(el.getAttribute('data-step'))||1 }
+function stepEls(){ return [...$('#visual').querySelectorAll('[data-step]')].filter(e=>!e.parentElement.closest('[data-step]')) }
+
+// Show everything up to step n. Draw step n live when animate is true.
+function go(n, animate, keepFinished){
+  const a=answers[showing]; const max=a?Math.max(a.steps.length,1):1;
+  n=Math.max(1,Math.min(n,Math.max(max,maxStep())));
+  step=n; renderDots();
+  const token=++drawToken;
+  const toDraw=[];
+  for(const el of stepEls()){
+    const s=stepOf(el);
+    if(s<n || (s===n && !animate)) showNow(el);
+    else if(s===n) { if(keepFinished && el.dataset.drawn) showNow(el); else { hide(el); toDraw.push(el) } }
+    else hide(el);
+  }
+  if(toDraw.length) drawSeq(toDraw, token);
+}
+function maxStep(){ let m=0; for(const e of stepEls()) m=Math.max(m,stepOf(e)); return m }
+
+function hide(el){ el.style.transition='none'; el.style.opacity='0'; el.dataset.drawn='' }
+function showNow(el){
+  el.style.transition='none'; el.style.opacity='1'; el.dataset.drawn='1';
+  el.querySelectorAll('*').forEach(c=>{ c.style.strokeDasharray=''; c.style.strokeDashoffset=''; c.style.fillOpacity=''; c.style.opacity=''; c.style.transform='' });
+  el.querySelectorAll('.restyle').forEach(c=>{ c.style.fill='none' });
+}
+
+const SHAPES='path,line,polyline,polygon,circle,ellipse,rect';
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+async function drawSeq(els, token){
+  // Count strokes so a busy step still finishes in a few seconds.
+  let total=0; for(const el of els) total+=parts(el).length;
+  const speed=Math.min(1, 9/Math.max(total,1));
+  for(const el of els){
+    if(token!==drawToken) return;
+    el.style.transition='none'; el.style.opacity='1';
+    await drawOne(el, token, speed);
+    el.dataset.drawn='1';
+  }
+  $('#pen').style.opacity='0';
+}
+function parts(el){
+  const list=[]; const isSvg = el instanceof SVGElement;
+  if(!isSvg) return [el];
+  if(el.matches(SHAPES+',text')) list.push(el);
+  el.querySelectorAll(SHAPES+',text').forEach(c=>{ if(!c.closest('marker,defs')) list.push(c) });
+  return list;
+}
+async function drawOne(el, token, speed){
+  const isSvg = el instanceof SVGElement;
+  if(!isSvg){ // HTML block: slide in.
+    el.style.opacity='0'; el.style.transform='translateY(8px)';
+    await sleep(20); el.style.transition='opacity .45s, transform .45s'; el.style.opacity='1'; el.style.transform='none';
+    await sleep(380*speed+80); return;
+  }
+  const ps=parts(el);
+  ps.forEach(p=>{ if(p.tagName==='text') p.style.opacity='0'; else { p.style.fillOpacity='0' } });
+  for(const p of ps){
+    if(token!==drawToken) return;
+    if(p.tagName==='text'){
+      p.style.transition='opacity .3s'; p.style.opacity='1'; await sleep(110*speed); continue;
+    }
+    let L=0; try{ L=p.getTotalLength() }catch(e){}
+    if(!L){ p.style.fillOpacity=''; continue }
+    const dur=Math.max(140, Math.min(650, L*1.2))*speed;
+    p.style.strokeDasharray=L+' '+L; p.style.strokeDashoffset=L;
+    const pen=$('#pen'); pen.style.opacity='1';
+    const wrap=$('#canvasWrap').getBoundingClientRect();
+    const t0=performance.now();
+    await new Promise(res=>{
+      function f(now){
+        if(token!==drawToken) return res();
+        const k=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-k,2);
+        p.style.strokeDashoffset=L*(1-e);
+        try{
+          const pt=p.getPointAtLength(L*e), m=p.getScreenCTM();
+          const x=pt.x*m.a+pt.y*m.c+m.e, y=pt.x*m.b+pt.y*m.d+m.f;
+          pen.style.left=(x-wrap.left+$('#canvasWrap').scrollLeft)+'px'; pen.style.top=(y-wrap.top+$('#canvasWrap').scrollTop)+'px';
+        }catch(err){}
+        if(k<1) requestAnimationFrame(f); else res();
+      }
+      requestAnimationFrame(f);
+    });
+    p.style.strokeDasharray=''; p.style.strokeDashoffset='';
+    p.style.transition='fill-opacity .35s'; p.style.fillOpacity='';
+  }
+}
+
+// ----- controls -----
+$('#prev').onclick=()=>go(step-1,true);
+$('#next').onclick=()=>go(step+1,true);
+$('#redraw').onclick=()=>{ const n=step; go(1,true); let i=1; const t=setInterval(()=>{ if(++i>n) return clearInterval(t); go(i,true) },1600) };
+$('#newl').onclick=()=>{ post({type:'new'}) };
+$('#chatToggle').onclick=()=>{ const open=$('.app').classList.contains('nochat'); setChat(open); post({type:'chat', open}) };
+setChat(false);
+$('#hist').onclick=()=>{ if(!$('#history').hidden){ $('#history').hidden=true; return } post({type:'history'}) };
+$('#hclose').onclick=()=>{ $('#history').hidden=true };
+$('#hsearch').oninput=renderHistory;
+$('#ask').onsubmit=e=>{ e.preventDefault(); const q=$('#q').value.trim(); if(q){ post({type:'ask', text:q}); $('#q').value='' } };
+window.addEventListener('resize',()=>{});
+post({type:'ready'});
+</script>
+</body>
+</html>

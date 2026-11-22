@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""Sulehri's Mac control helper. Coordinates are screenshot pixels (top-left 0,0).
+
+  mac see                      take a fresh screenshot, print its path
+  mac open "App Name"          open / switch to an app
+  mac url "https://..."        open a web page
+  mac click X Y | doubleclick X Y | rightclick X Y | move X Y
+  mac type "text"              type text (any language)
+  mac key cmd+shift+t          press keys (return, esc, tab, space, delete, up, down, left, right, f1..)
+  mac scroll down 5            scroll where the mouse is
+  mac wait 1.5                 wait
+"""
+import json, os, subprocess, sys, time
+
+SUPPORT = os.path.expanduser("~/Library/Application Support/Sulehri")
+STATE = os.path.join(SUPPORT, "screen.json")
+SHOTS = os.path.join(SUPPORT, "shots")
+CLICLICK = next((p for p in ["/opt/homebrew/bin/cliclick", "/usr/local/bin/cliclick"] if os.path.exists(p)), "cliclick")
+
+
+def state():
+    with open(STATE) as f:
+        return json.load(f)
+
+
+def to_points(x, y):
+    s = state()
+    px = s["x"] + float(x) * s["w"] / s["iw"]
+    py = s["y"] + float(y) * s["h"] / s["ih"]
+    return int(round(px)), int(round(py))
+
+
+def cli(*args):
+    r = subprocess.run([CLICLICK, "-e", "250", *args], capture_output=True, text=True)
+    if r.returncode != 0:
+        sys.exit("cliclick failed (Sulehri needs Accessibility permission): " + r.stderr.strip())
+
+
+def see():
+    s = state()
+    os.makedirs(SHOTS, exist_ok=True)
+    path = os.path.join(SHOTS, "see-%d.jpg" % int(time.time() * 1000))
+    subprocess.run(["/usr/sbin/screencapture", "-x", "-t", "jpg", "-D", str(s.get("display", 1)), path])
+    subprocess.run(["/usr/bin/sips", "-Z", "1568", path], capture_output=True)
+    out = subprocess.run(["/usr/bin/sips", "-g", "pixelWidth", "-g", "pixelHeight", path], capture_output=True, text=True).stdout
+    iw = int(out.split("pixelWidth:")[1].split()[0]); ih = int(out.split("pixelHeight:")[1].split()[0])
+    s["iw"], s["ih"] = iw, ih
+    with open(STATE, "w") as f:
+        json.dump(s, f)
+    print("Screenshot: %s (%dx%d pixels). Read it to see the screen." % (path, iw, ih))
+
+
+MODS = {"cmd": "cmd", "command": "cmd", "ctrl": "ctrl", "control": "ctrl", "alt": "alt", "option": "alt", "opt": "alt",
+        "shift": "shift", "fn": "fn"}
+KEYS = {"return": "return", "enter": "enter", "esc": "esc", "escape": "esc", "tab": "tab", "space": "space",
+        "delete": "delete", "backspace": "delete", "fwd-delete": "fwd-delete", "up": "arrow-up", "down": "arrow-down",
+        "left": "arrow-left", "right": "arrow-right", "home": "home", "end": "end", "pageup": "page-up", "pagedown": "page-down"}
+
+
+def key(combo):
+    parts = [p.strip().lower() for p in combo.replace(" ", "+").split("+") if p.strip()]
+    mods = [MODS[p] for p in parts if p in MODS]
+    rest = [p for p in parts if p not in MODS]
+    args = []
+    if mods:
+        args.append("kd:" + ",".join(mods))
+    for k in rest:
+        if k in KEYS:
+            args.append("kp:" + KEYS[k])
+        elif k.startswith("f") and k[1:].isdigit():
+            args.append("kp:f" + k[1:])
+        else:
+            args.append("t:" + k)
+    if mods:
+        args.append("ku:" + ",".join(mods))
+    cli(*args)
+
+
+def type_text(text):
+    if text.isascii():
+        cli("t:" + text)
+        return
+    # Non-English text: paste it, then put the old clipboard back.
+    old = subprocess.run(["pbpaste"], capture_output=True).stdout
+    subprocess.run(["pbcopy"], input=text.encode())
+    key("cmd+v")
+    time.sleep(0.3)
+    subprocess.run(["pbcopy"], input=old)
+
+
+def wait_for_voice(limit=25):
+    """Act at the right moment in Sulehri's speech.
+    Step sync "after" (default): wait until the sentence about this action has been spoken.
+    Step sync "with": wait only until that sentence starts, then act while it is being said."""
+    path = os.path.join(SUPPORT, "voice.json")
+    end = time.time() + limit
+    while time.time() < end:
+        try:
+            with open(path) as f:
+                st = json.load(f)
+        except Exception:
+            return
+        n = st.get("parsed", 0)
+        if not st.get("busy") or n == 0:
+            return
+        target = st.get("started", 0) if st.get("mode") == "with" else st.get("finished", 0)
+        if target >= n:
+            return
+        time.sleep(0.04)
+
+
+def acted():
+    """Tell Sulehri the screen just changed, so it can fade old drawings."""
+    with open(os.path.join(SUPPORT, "acted"), "w") as f:
+        f.write(str(time.time()))
+
+
+def main(a):
+    if not a:
+        print(__doc__); return
+    c = a[0].lower()
+    acting = c in ("open", "url", "click", "doubleclick", "rightclick", "type", "key", "scroll")
+    if acting or c == "move":
+        wait_for_voice()
+    if acting:
+        acted()
+    if c == "see":
+        see()
+    elif c == "open":
+        subprocess.run(["open", "-a", " ".join(a[1:])], check=False); time.sleep(1); print("Opened", " ".join(a[1:]))
+    elif c == "url":
+        subprocess.run(["open", a[1]]); time.sleep(1); print("Opened", a[1])
+    elif c in ("click", "doubleclick", "rightclick", "move"):
+        x, y = to_points(a[1], a[2])
+        op = {"click": "c", "doubleclick": "dc", "rightclick": "rc", "move": "m"}[c]
+        cli("m:%d,%d" % (x, y), "w:120", "%s:%d,%d" % (op, x, y)); print("%s at %s,%s" % (c, a[1], a[2]))
+    elif c == "type":
+        type_text(" ".join(a[1:])); print("Typed")
+    elif c == "key":
+        key(" ".join(a[1:])); print("Pressed", " ".join(a[1:]))
+    elif c == "scroll":
+        n = int(a[2]) if len(a) > 2 else 5
+        d = -1 if a[1].lower() == "down" else 1
+        subprocess.run(["osascript", "-l", "JavaScript", "-e",
+                        "ObjC.import('CoreGraphics');for(var i=0;i<%d;i++){var e=$.CGEventCreateScrollWheelEvent(null,0,1,%d);$.CGEventPost(0,e);delay(0.03)}" % (n, d * 3)])
+        print("Scrolled", a[1])
+    elif c == "wait":
+        time.sleep(float(a[1]) if len(a) > 1 else 1)
+    else:
+        print(__doc__)
+
+
+main(sys.argv[1:])

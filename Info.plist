@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key><string>Sulehri</string>
+  <key>CFBundleDisplayName</key><string>Sulehri</string>
+  <key>CFBundleIdentifier</key><string>com.umer.sulehri</string>
+  <key>CFBundleExecutable</key><string>Sulehri</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>1.0</string>
+  <key>CFBundleVersion</key><string>1</string>
+  <key>LSMinimumSystemVersion</key><string>13.0</string>
+  <key>LSUIElement</key><true/>
+  <key>NSHighResolutionCapable</key><true/>
+  <key>NSMicrophoneUsageDescription</key><string>Sulehri listens while you hold Control + Option so you can ask questions by voice.</string>
+  <key>NSSpeechRecognitionUsageDescription</key><string>Sulehri turns your voice question into text.</string>
+  <key>NSScreenCaptureUsageDescription</key><string>Sulehri looks at your screen so it can explain what you are seeing.</string>
+</dict>
+</plist>
